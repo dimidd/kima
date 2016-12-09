@@ -1,7 +1,7 @@
-"001":    id
-"008":    normalized_time
-"041":    language
-"100":    author
-"245":    title
-"260":    publication_details
-"951":    haf_normalized_toponym
+"001":    id_001
+"008":    normalized_time_008
+"041":    language_041
+"100":    author_100
+"245":    title_245
+"260":    publication_details_260
+"951":    half_normalized_toponym_951
