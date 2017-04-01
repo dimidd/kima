@@ -19,12 +19,13 @@ class Field < Enum::Base
      :AtsChronUncert,
      :AtsChronApprox,
      :Src,
-     :OrigId
+     :OrigId,
+     :AtsUri
 end
 
 def f2i n; Field.index n; end
 
-lines = File.readlines "kima_sample2.tsv"
+lines = File.readlines ARGV[0]
 lines2 = lines.map{ |l| l.chomp.split("\t") }
 headers = lines2[0]
 rows = lines2[1..-1]
@@ -47,13 +48,13 @@ grp.each do |k, v|
   rec = {
     "type" => "Feature",
     "id" => top_id,
-    "uri" => "http://www.kima.org/place/#{top_id}",
+    "uri" => "null",
     "title" => "#{v[0][f2i :PriHebFull]} | #{v[0][f2i :PriRomFull]}",
-    "bbox" => "31.771959, 35.217018, 31.771959, 35.217018",
+    "bbox" => "null",
     "when" => {"start" => 12345, "end" => 12345 },
     "links" => {
-        "close_matches" => ['http://www.geonames.org/1234567'],
-        "exact_matches" => ['https://pleiades.stoa.org/places/1234567']
+        "close_matches" => [],
+        "exact_matches" => []
     },
     "primary_form" => v[0][f2i :PriHebFull],
     "primary_form_romanized" => v[0][f2i :PriRomFull],
@@ -104,7 +105,7 @@ grp.each do |k, v|
     ats_rec["attestation_chronology_original"] = ats[f2i :AtsChronOrig]
     ats_rec["attestation_chronology_uncertain"] = ats[f2i :AtsChronUncert]
     ats_rec["attestation_chronology_approximate"] = ats[f2i :AtsChronApprox]
-    ats_rec["attestation_uri"] = "example.com/12345"
+    ats_rec["attestation_uri"] = ats[f2i :AtsUri]
     ats_rec["original_id"] = ats[f2i :OrigId]
     rec["names"].last["attested_in"] << ats_rec
     ats_id += 1
@@ -120,8 +121,22 @@ grp.each do |k, v|
 
   rec["when"]["start"] = top_start
   rec["when"]["end"] = top_end
+
   res << rec
   top_id += 1
+end
+
+# add coordinates
+pri_rom_matches = File.readlines("pri_rom_matches.tsv")[1..-1].map{ |l| l.chomp.split("\t") }
+pri_rom_matches_hash = {}
+pri_rom_matches.each{ |r| pri_rom_matches_hash[r[2]] = r }
+res.each do |r|
+  pri_rom = r["primary_form_romanized"].gsub(/\([^()]*\)/, '').strip
+  match = pri_rom_matches_hash[pri_rom]
+  r["geometry"] = {
+    "type": "Point",
+    "coordinates": [match[1].to_f, match[3].to_f]
+  } if match
 end
 
 puts res.to_json

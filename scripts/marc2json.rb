@@ -34,7 +34,8 @@ reader = MARC::XMLReader.new(ARGV[0], :external_encoding => "MARC-8")
 begin
   reader.each do |rec|
     res_rec = process_rec rec, field2desc
-    res << res_rec if res_rec
+    # skip fields with just one field (the id)
+    res << res_rec if res_rec && res_rec.keys.size > 1
   end
 rescue => e
   STDERR.puts e
